@@ -2,11 +2,10 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+import pandas as pd
 from time import sleep
 from pprint import pprint
+
 
 service = ChromeService(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
@@ -19,28 +18,29 @@ dados_possoa = {}
 driver.get(URL)
 sleep(1)
 
-def gerar_pessoa(driver):
+driver.find_element(By.ID, 'nv-cookie-generator-people').click()
 
+ps = driver.find_elements(By.TAG_NAME, 'p')
+for chave in ps[2:28]:
+    dados_possoa[chave.text] = []
+    
+quantidade = int(input('Quantas pessoas devo gerar? '))
+
+for _ in range(quantidade):
     labels = driver.find_elements(By.TAG_NAME, 'label')
-    ps = driver.find_elements(By.TAG_NAME, 'p')
-
     combinacao = zip(ps[2:28], labels[1:])
-
-    info_pessoa = {}
 
     for key, value in combinacao:
         key_str = key.text
         value_str = value.text
-        info_pessoa[key_str] = value_str
         
-    return info_pessoa
-
-pessoas = []
-
-for _ in range(100):
+        for chave, valor in dados_possoa.items():
+            if chave == key_str:
+                dados_possoa[chave].append(value_str)
+                
     driver.find_element(By.ID, 'nv-new-generator-people').click()
-    pessoas.append(gerar_pessoa(driver))
-    
-pprint(pessoas)
+
+df = pd.DataFrame(dados_possoa)
+df.to_csv('pessoas.csv', index=False)
 
 driver.quit()
